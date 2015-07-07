@@ -54,11 +54,12 @@ public class XMLLab {
         SyndFeed feed = input.build(new XmlReader(httpcon));
         List<SyndEntry> entries = feed.getEntries();
         for (SyndEntry x : entries) {
-            System.out.println(((SyndContentImpl)x.getContents().get(0)).getValue());
-            
+            SyndContentImpl syc = (SyndContentImpl)x.getContents().get(0);
+            String value = syc.getValue();
             List<Element> foreign = (List<Element>) x.getForeignMarkup();
             for (Element y : foreign) {;
                 if (y.getName().equals("rating")) {
+                    System.out.println(value);
                     System.out.println(y.getValue());
                 }
             }
