@@ -40,7 +40,6 @@ public class XMLLab {
             String[] arreglito2 = arreglito[3].split("\\?");
             String ID = arreglito2[0].substring(2);
             System.out.println(ID);
-            
         }
     }
     
