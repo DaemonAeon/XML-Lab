@@ -5,6 +5,7 @@
  */
 package xml.lab;
 
+import com.sun.syndication.feed.synd.SyndContentImpl;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
@@ -17,6 +18,7 @@ import com.sun.syndication.io.SyndFeedInput;
 import com.sun.syndication.io.XmlReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import org.jdom.Element;
 
 /**
  *
@@ -40,49 +42,35 @@ public class XMLLab {
 
         while (itEntries.hasNext()) {
             SyndEntry entry = (SyndEntry) itEntries.next();
-            String Region = entry.getLink().split("/")[3];
-            String ID = entry.getLink().split("/")[6].split("\\?")[0].substring(2);
-            getCustomerXML(Region, ID);
-
+            String list = entry.getLink().split("/")[6].split("\\?")[0].substring(2);
+            System.out.println("ID: " + list);
+            getIDRSS(list);
+            System.out.println("-------------------------------------------");
         }
 
     }
 
-    public static void getCustomerXML(String Region, String ID) throws MalformedURLException, IllegalArgumentException, IOException, FeedException {
-        URL url = new URL("http://ax.itunes.apple.com/" + Region + "/rss/customerreviews/id=" + ID + "/sortBy=mostRecent/xml");
+    public static void getIDRSS(String id) throws Exception {
+        URL url = new URL("http://ax.itunes.apple.com/us/rss/customerreviews/id=" + id + "/sortBy=mostRecent/xml");
         HttpURLConnection httpcon = (HttpURLConnection) url.openConnection();
         // Reading the feed
         SyndFeedInput input = new SyndFeedInput();
 
         SyndFeed feed = input.build(new XmlReader(httpcon));
-
-        List entries = feed.getEntries();
-        Iterator itEntries = entries.iterator();
-
-        while (itEntries.hasNext()) {
-            SyndEntry entry = (SyndEntry) itEntries.next();
-            String[] S = NGram(entry.getTitle(), 3);
-            System.out.println(S);
-        }
-    }
-
-    public static String[] NGram(String s, int len) {
-        String[] parts = s.split(" ");
-        String[] result=null;
-        if (parts.length - len + 1 > 0) {
-            result = new String[parts.length - len + 1];
-            for (int i = 0; i < parts.length - len + 1; i++) {
-                StringBuilder sb = new StringBuilder();
-                for (int k = 0; k < len; k++) {
-                    if (k > 0) {
-                        sb.append(' ');
-                    }
-                    sb.append(parts[i + k]);
+        List<SyndEntry> entries = feed.getEntries();
+        for (SyndEntry x : entries) {
+            SyndContentImpl syc = (SyndContentImpl) x.getContents().get(0);
+            String value = syc.getValue();
+            List<Element> foreign = (List<Element>) x.getForeignMarkup();
+            for (Element y : foreign) {;
+                if (y.getName().equals("rating")) {
+                    System.out.println(value);
+                    System.out.println(y.getValue());
                 }
-                result[i] = sb.toString();
+
             }
         }
-        return result;
+
     }
 
 }
