@@ -42,10 +42,20 @@ public class XMLLab {
      * @throws java.lang.Exception
      */
     public static void main(String[] args) throws Exception {
+        System.out.println("FREE APPS");
+        getAll("topfreeapplications");
+        System.out.println();
+        System.out.println("PAID APPS");
+        getAll("toppaidapplications");
+        
+        
+    }
+
+    public static void getAll(String LISTOF) throws MalformedURLException, IOException, IllegalArgumentException, FeedException, Exception {
         mapGood = new HashMap<>();
         mapBad = new HashMap<>();
 
-        URL url = new URL("http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/toppaidapplications/limit=10/xml");
+        URL url = new URL("http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/"+LISTOF+"/limit=10/xml");
         HttpURLConnection httpcon = (HttpURLConnection) url.openConnection();
 
         // Reading the feed
@@ -59,10 +69,28 @@ public class XMLLab {
             String list = entry.getLink().split("/")[6].split("\\?")[0].substring(2);
             getIDRSS(list);
         }
+
+        System.out.println("# of Good Comments " + GoodCounter);
+        System.out.println("TOP 10 Good Comments");
+
         ValueComparator vc = new ValueComparator(mapGood);
         TreeMap<String, Integer> tc = new TreeMap<>(vc);
         tc.putAll(mapGood);
-        System.out.println(tc);
+        for (int i = 0; i < 10; i++) {
+            System.out.println(tc.keySet().toArray()[i]);
+        }
+        System.out.println();
+        System.out.println("================================");
+        System.out.println();
+        System.out.println("# of Bad Comments " + GoodCounter);
+        System.out.println("TOP 10 Bad Comments");
+
+        vc = new ValueComparator(mapBad);
+        tc = new TreeMap<>(vc);
+        tc.putAll(mapBad);
+        for (int i = 0; i < 10; i++) {
+            System.out.println(tc.keySet().toArray()[i]);
+        }
 
     }
 
@@ -82,7 +110,8 @@ public class XMLLab {
             for (Element y : foreign) {;
                 if (y.getName().equals("rating")) {
                     int rating = Integer.parseInt(y.getValue());
-                    if (rating < 3) {
+                    if (rating >= 3) {
+                        GoodCounter++;
                         String[] ngram = NGram(value.trim(), 2);
                         for (String h : ngram) {
                             if (!mapGood.containsKey(h)) {
@@ -93,8 +122,9 @@ public class XMLLab {
                             }
                         }
                     } else {
+                        BadCounter++;
                         String[] ngram = NGram(value.trim(), 2);
-                        for (String h: ngram) {
+                        for (String h : ngram) {
                             if (!mapBad.containsKey(h)) {
                                 mapBad.put(h, 0);
                             } else {
@@ -123,18 +153,10 @@ public class XMLLab {
                     }
                     sb.append(parts[i + k]);
                 }
-
+                result[i] = sb.toString();
             }
         }
         return result;
-    }
-
-    public static void printNGram(String Comment) {
-        String[] NGram = NGram(Comment, 3);
-        HashMap<String, Integer> ngram = new HashMap<>();
-        for (String x : NGram) {
-
-        }
     }
 
     static class ValueComparator implements Comparator<String> {
