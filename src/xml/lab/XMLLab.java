@@ -19,6 +19,11 @@ import com.sun.syndication.io.XmlReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import org.jdom.Element;
 
 /**
@@ -27,8 +32,8 @@ import org.jdom.Element;
  */
 public class XMLLab {
 
-    private static ArrayList<String> GoodComments;
-    private static ArrayList<String> BadComments;
+    private static HashMap<String, Integer> mapGood;
+    private static HashMap<String, Integer> mapBad;
     private static int GoodCounter = 0;
     private static int BadCounter = 0;
 
@@ -37,8 +42,8 @@ public class XMLLab {
      * @throws java.lang.Exception
      */
     public static void main(String[] args) throws Exception {
-        GoodComments = new ArrayList();
-        BadComments = new ArrayList();
+        mapGood = new HashMap<>();
+        mapBad = new HashMap<>();
 
         URL url = new URL("http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/toppaidapplications/limit=10/xml");
         HttpURLConnection httpcon = (HttpURLConnection) url.openConnection();
@@ -52,10 +57,12 @@ public class XMLLab {
         while (itEntries.hasNext()) {
             SyndEntry entry = (SyndEntry) itEntries.next();
             String list = entry.getLink().split("/")[6].split("\\?")[0].substring(2);
-            System.out.println("ID: " + list);
             getIDRSS(list);
-            System.out.println("-------------------------------------------");
         }
+        ValueComparator vc = new ValueComparator(mapGood);
+        TreeMap<String, Integer> tc = new TreeMap<>(vc);
+        tc.putAll(mapGood);
+        System.out.println(tc);
 
     }
 
@@ -76,13 +83,26 @@ public class XMLLab {
                 if (y.getName().equals("rating")) {
                     int rating = Integer.parseInt(y.getValue());
                     if (rating < 3) {
-                        BadCounter++;
-                        BadComments.add(value);
+                        String[] ngram = NGram(value.trim(), 2);
+                        for (String h : ngram) {
+                            if (!mapGood.containsKey(h)) {
+                                mapGood.put(h, 0);
+                            } else {
+                                int index = mapGood.get(h);
+                                mapGood.put(h, ++index);
+                            }
+                        }
                     } else {
-                        GoodCounter++;
-                        GoodComments.add(value);
+                        String[] ngram = NGram(value.trim(), 2);
+                        for (String h: ngram) {
+                            if (!mapBad.containsKey(h)) {
+                                mapBad.put(h, 0);
+                            } else {
+                                int index = mapBad.get(h);
+                                mapBad.put(h, ++index);
+                            }
+                        }
                     }
-                    System.out.println(value);
                 }
             }
 
@@ -92,7 +112,7 @@ public class XMLLab {
     public static String[] NGram(String s, int len) {
         String[] parts = s.split(" ");
         String[] result = null;
-        if (parts.length - len + 1 < 0) {
+        if (parts.length - len + 1 >= 0) {
             result = new String[parts.length - len + 1];
 
             for (int i = 0; i < parts.length - len + 1; i++) {
@@ -111,7 +131,28 @@ public class XMLLab {
 
     public static void printNGram(String Comment) {
         String[] NGram = NGram(Comment, 3);
-        
+        HashMap<String, Integer> ngram = new HashMap<>();
+        for (String x : NGram) {
+
+        }
+    }
+
+    static class ValueComparator implements Comparator<String> {
+
+        HashMap<String, Integer> base;
+
+        public ValueComparator(HashMap<String, Integer> base) {
+            this.base = base;
+        }
+
+        // Note: this comparator imposes orderings that are inconsistent with equals.    
+        public int compare(String a, String b) {
+            if (base.get(a) >= base.get(b)) {
+                return -1;
+            } else {
+                return 1;
+            } // returning 0 would merge keys
+        }
     }
 
 }
