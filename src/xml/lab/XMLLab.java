@@ -5,6 +5,7 @@
  */
 package xml.lab;
 
+import com.sun.syndication.feed.synd.SyndContentImpl;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Iterator;
@@ -53,8 +54,10 @@ public class XMLLab {
         SyndFeed feed = input.build(new XmlReader(httpcon));
         List<SyndEntry> entries = feed.getEntries();
         for (SyndEntry x : entries) {
+            System.out.println(((SyndContentImpl)x.getContents().get(0)).getValue());
+            
             List<Element> foreign = (List<Element>) x.getForeignMarkup();
-            for (Element y : foreign) {
+            for (Element y : foreign) {;
                 if (y.getName().equals("rating")) {
                     System.out.println(y.getValue());
                 }
